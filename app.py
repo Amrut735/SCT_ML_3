@@ -688,5 +688,6 @@ if __name__ == '__main__':
     get_sample_images()
     print("Web application starting...")
     print("Access the application at: http://localhost:5001")
+    print("Network access: http://192.168.179.179:5001")
     # Development server only; for production use waitress
-    app.run(debug=True, host='0.0.0.0', port=5001, use_reloader=False)
+    app.run(debug=True, host='0.0.0.0', port=5001, use_reloader=False, threaded=True)
