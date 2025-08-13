@@ -342,14 +342,42 @@ def ensure_models_loaded():
 @app.route('/health')
 def health():
     """Health check endpoint"""
-    return jsonify({
-        'status': 'ok',
-        'models_loaded': len(model_results) > 0,
-        'models_available': list(model_results.keys()) if model_results else [],
-        'model_results_keys': [list(model_results[k].keys()) if k in model_results else [] for k in ['linear', 'rbf', 'poly']],
-        'upload_folder': UPLOAD_FOLDER,
-        'upload_folder_exists': os.path.exists(UPLOAD_FOLDER)
-    })
+    try:
+        # Try to load models if they're not loaded
+        if not model_results or len(model_results) == 0:
+            print("Models not loaded, attempting to load now...")
+            try:
+                load_trained_models()
+                get_sample_images()
+                print("Models loaded successfully during health check")
+            except Exception as e:
+                print(f"Failed to load models during health check: {e}")
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Models failed to load',
+                    'error': str(e),
+                    'models_loaded': False,
+                    'models_available': [],
+                    'upload_folder': UPLOAD_FOLDER,
+                    'upload_folder_exists': os.path.exists(UPLOAD_FOLDER)
+                }), 500
+        
+        return jsonify({
+            'status': 'ok',
+            'models_loaded': len(model_results) > 0,
+            'models_available': list(model_results.keys()) if model_results else [],
+            'model_results_keys': [list(model_results[k].keys()) if k in model_results else [] for k in ['linear', 'rbf', 'poly']],
+            'upload_folder': UPLOAD_FOLDER,
+            'upload_folder_exists': os.path.exists(UPLOAD_FOLDER),
+            'sample_images_count': len(sample_images) if sample_images else 0
+        })
+    except Exception as e:
+        print(f"Health check error: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Health check failed',
+            'error': str(e)
+        }), 500
 
 @app.route('/test_upload')
 def test_upload_page():
@@ -681,13 +709,30 @@ def get_metrics():
 if __name__ == '__main__':
     # Direct run (development): initialize immediately
     print("=== STARTING APP ===")
+    
+    # Add startup delay for production environments
+    import time
+    print("Waiting 5 seconds for environment to stabilize...")
+    time.sleep(5)
+    
     print("Calling load_trained_models()...")
-    load_trained_models()
-    print(f"Models loaded: {list(model_results.keys())}")
-    print("Calling get_sample_images()...")
-    get_sample_images()
+    try:
+        load_trained_models()
+        print(f"Models loaded: {list(model_results.keys())}")
+        
+        print("Calling get_sample_images()...")
+        get_sample_images()
+        print("Sample images loaded successfully")
+        
+    except Exception as e:
+        print(f"WARNING: Failed to load models during startup: {e}")
+        print("App will start but models may need to be loaded via /health endpoint")
+        print("This is normal for production deployments")
+    
     print("Web application starting...")
     print("Access the application at: http://localhost:5001")
     print("Network access: http://192.168.179.179:5001")
+    print("Health check: http://localhost:5001/health")
+    
     # Development server only; for production use waitress
     app.run(debug=True, host='0.0.0.0', port=5001, use_reloader=False, threaded=True)
