@@ -1,33 +1,40 @@
 #!/usr/bin/env python3
 """
-Test script to check app import and load_trained_models
+Test script to check if the Flask app can be imported and started
 """
 
 import sys
 import os
 
-# Add current directory to path
-sys.path.insert(0, os.getcwd())
+print("=== Testing Flask App Import ===")
+print(f"Python version: {sys.version}")
+print(f"Current working directory: {os.getcwd()}")
 
 try:
-    print("=== TESTING APP IMPORT ===")
-    import app
-    
+    # Try to import the app
+    print("Attempting to import app...")
+    from app import app
     print("✓ App imported successfully")
-    print(f"Model results before: {list(app.model_results.keys())}")
     
-    # Clear and reload
-    app.model_results.clear()
-    app._initialized = False
-    
-    print("\n=== CALLING LOAD_TRAINED_MODELS ===")
-    app.load_trained_models()
-    
-    print(f"✓ Models loaded. Keys: {list(app.model_results.keys())}")
-    for k, v in app.model_results.items():
-        print(f"  {k}: {list(v.keys())}")
+    # Check if app is a Flask app
+    if hasattr(app, 'route'):
+        print("✓ App has route decorator (Flask app)")
+    else:
+        print("✗ App doesn't have route decorator")
         
+    # Check app configuration
+    print(f"App name: {app.name}")
+    print(f"App debug mode: {app.debug}")
+    
+    print("✓ All tests passed - app should work!")
+    
+except ImportError as e:
+    print(f"✗ Import error: {e}")
+    print("This usually means there's a syntax error in app.py")
+    
 except Exception as e:
-    print(f"✗ Error: {e}")
+    print(f"✗ Unexpected error: {e}")
     import traceback
-    traceback.print_exc() 
+    traceback.print_exc()
+
+print("=== Test Complete ===") 

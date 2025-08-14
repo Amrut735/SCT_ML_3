@@ -706,6 +706,52 @@ def get_metrics():
         traceback.print_exc()
         return jsonify({'error': f'Server error: {str(e)}'})
 
+@app.route('/api/version')
+def get_version():
+    """Get application version information"""
+    try:
+        import pkg_resources
+        import sys
+        
+        # Get Python version
+        python_version = sys.version.split()[0]
+        
+        # Get package versions
+        package_versions = {}
+        for package in ['numpy', 'opencv-python-headless', 'matplotlib', 'scikit-learn', 'flask', 'pillow']:
+            try:
+                version = pkg_resources.get_distribution(package).version
+                package_versions[package] = version
+            except pkg_resources.DistributionNotFound:
+                package_versions[package] = "Not installed"
+        
+        version_info = {
+            'app_version': '1.0.0',
+            'python_version': python_version,
+            'flask_version': package_versions.get('flask', 'Unknown'),
+            'package_versions': package_versions,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        return jsonify(version_info)
+        
+    except Exception as e:
+        print(f"Error getting version info: {str(e)}")
+        return jsonify({
+            'error': f'Failed to get version info: {str(e)}',
+            'app_version': '1.0.0',
+            'timestamp': datetime.now().isoformat()
+        })
+
+@app.route('/version')
+def version():
+    """Simple version endpoint"""
+    return jsonify({
+        'app_version': '1.0.0',
+        'status': 'running',
+        'timestamp': datetime.now().isoformat()
+    })
+
 if __name__ == '__main__':
     # Direct run (development): initialize immediately
     print("=== STARTING APP ===")
