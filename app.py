@@ -535,18 +535,26 @@ def upload_file():
                             confidence = 0.72
                     
                     predictions[kernel] = {
-                        'prediction': 'Cat' if pred == 0 else 'Dog',
-                        'confidence': round(confidence, 4),
+                        'label': '🐱 Cat' if pred == 0 else '🐶 Dog',
+                        'confidence': round(confidence * 100, 1),  # Convert to percentage
                         'raw_prediction': int(pred)
                     }
                     
                 except Exception as e:
                     print(f"Error predicting with {kernel} kernel: {e}")
                     predictions[kernel] = {
-                        'prediction': 'Error',
+                        'label': '❌ Error',
                         'confidence': 0.0,
                         'raw_prediction': -1
                     }
+            
+            # Convert image to base64 for frontend display
+            try:
+                with open(filepath, 'rb') as img_file:
+                    image_data = base64.b64encode(img_file.read()).decode()
+            except Exception as e:
+                print(f"Error reading image for base64 conversion: {e}")
+                image_data = None
             
             # Clean up uploaded file
             try:
@@ -559,7 +567,8 @@ def upload_file():
                 'filename': filename,
                 'predictions': predictions,
                 'image_size': f"{IMG_SIZE}x{IMG_SIZE}",
-                'grayscale': GRAYSCALE
+                'grayscale': GRAYSCALE,
+                'image': image_data
             })
         
         else:
@@ -626,15 +635,15 @@ def predict_sample():
                         confidence = 0.72
                 
                 predictions[kernel] = {
-                    'prediction': 'Cat' if pred == 0 else 'Dog',
-                    'confidence': round(confidence, 4),
+                    'label': '🐱 Cat' if pred == 0 else '🐶 Dog',
+                    'confidence': round(confidence * 100, 1),  # Convert to percentage
                     'raw_prediction': int(pred)
                 }
                 
             except Exception as e:
                 print(f"Error predicting with {kernel} kernel: {e}")
                 predictions[kernel] = {
-                    'prediction': 'Error',
+                    'label': '❌ Error',
                     'confidence': 0.0,
                     'raw_prediction': -1
                 }
